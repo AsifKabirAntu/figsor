@@ -1,0 +1,44 @@
+{
+  "name": "figsor",
+  "version": "2.0.0",
+  "description": "Figsor — MCP server that bridges Cursor AI to Figma for chat-driven design creation",
+  "type": "module",
+  "main": "dist/server.js",
+  "bin": {
+    "figsor": "dist/server.js"
+  },
+  "files": [
+    "dist/"
+  ],
+  "keywords": [
+    "figma",
+    "cursor",
+    "mcp",
+    "design",
+    "ai",
+    "plugin",
+    "figsor",
+    "model-context-protocol"
+  ],
+  "author": "Asif Kabir",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc && node dist/server.js",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "ws": "^8.18.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "@types/ws": "^8.18.0",
+    "typescript": "^5.7.3"
+  }
+}

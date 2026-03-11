@@ -1,0 +1,13 @@
+{
+  "name": "figsor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Figma ↔ Cursor bridge: chat about designs in Cursor, create them in Figma",
+  "scripts": {
+    "install:mcp": "cd mcp-server && npm install",
+    "build": "cd mcp-server && npm run build",
+    "start": "cd mcp-server && npm start",
+    "dev": "cd mcp-server && npm run dev",
+    "setup": "npm run install:mcp && npm run build"
+  }
+}

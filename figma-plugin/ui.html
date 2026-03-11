@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 12px;
+      background: var(--figma-color-bg, #2c2c2c);
+      color: var(--figma-color-text, #e0e0e0);
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .header h2 { font-size: 14px; font-weight: 600; flex: 1; }
+    .header-actions { display: flex; gap: 4px; }
+    .icon-btn {
+      width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: 1px solid transparent;
+      border-radius: 5px; cursor: pointer;
+      color: var(--figma-color-text-secondary, #999);
+      transition: all 0.15s;
+    }
+    .icon-btn:hover {
+      background: var(--figma-color-bg-secondary, #383838);
+      border-color: var(--figma-color-border, #444);
+      color: var(--figma-color-text, #e0e0e0);
+    }
+    .icon-btn svg { width: 14px; height: 14px; }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #ccc; transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .status-dot.connected { background: #1BC47D; }
+    .status-dot.connecting { background: #F5A623; animation: pulse 1s infinite; }
+    .status-dot.disconnected { background: #F24822; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+    .status-text {
+      font-size: 11px;
+      color: var(--figma-color-text-secondary, #999);
+      flex: 1;
+    }
+
+    /* Sections */
+    .section {
+      border: 1px solid var(--figma-color-border, #444);
+      border-radius: 6px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px;
+      background: var(--figma-color-bg-secondary, #383838);
+      cursor: pointer; user-select: none;
+      font-size: 11px; font-weight: 600;
+    }
+    .section-header:hover { background: var(--figma-color-bg-hover, #404040); }
+    .section-body { padding: 10px; display: none; }
+    .section-body.open { display: block; }
+    .section-icon { width: 14px; height: 14px; opacity: 0.7; }
+    .section-label { display: flex; align-items: center; gap: 6px; }
+    .chevron { transition: transform 0.2s; font-size: 10px; }
+    .chevron.open { transform: rotate(90deg); }
+
+    /* Form */
+    label {
+      display: block; font-size: 11px; font-weight: 500;
+      margin-bottom: 4px;
+      color: var(--figma-color-text-secondary, #aaa);
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%; padding: 6px 8px;
+      background: var(--figma-color-bg, #2c2c2c);
+      border: 1px solid var(--figma-color-border, #555);
+      border-radius: 4px; font-size: 11px;
+      color: var(--figma-color-text, #e0e0e0);
+      outline: none; margin-bottom: 8px;
+    }
+    input:focus { border-color: var(--figma-color-border-selected, #999); }
+    .btn {
+      width: 100%; padding: 7px 12px;
+      border: none; border-radius: 4px;
+      font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--figma-color-text, #e0e0e0); color: var(--figma-color-bg, #1a1a1a); }
+    .btn-secondary {
+      background: var(--figma-color-bg-secondary, #444);
+      color: var(--figma-color-text, #e0e0e0);
+      border: 1px solid var(--figma-color-border, #555);
+    }
+    .library-status {
+      font-size: 11px; margin-top: 8px; padding: 6px 8px;
+      border-radius: 4px;
+      background: var(--figma-color-bg-secondary, #383838);
+    }
+    .library-status.success { color: #1BC47D; }
+    .library-status.error { color: #F24822; }
+
+    /* Pro Gate */
+    .pro-gate {
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .pro-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--figma-color-text-tertiary, #888);
+      margin-bottom: 10px;
+    }
+    .pro-badge svg { width: 14px; height: 14px; }
+    .pro-title {
+      font-size: 13px; font-weight: 700;
+      color: var(--figma-color-text, #e0e0e0);
+      margin-bottom: 6px;
+    }
+    .pro-desc {
+      font-size: 11px; line-height: 1.5;
+      color: var(--figma-color-text-secondary, #999);
+      margin-bottom: 12px;
+    }
+    .pro-features {
+      text-align: left;
+      margin-bottom: 14px;
+      padding: 0 8px;
+    }
+    .pro-feature {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 11px; margin-bottom: 5px;
+      color: var(--figma-color-text-secondary, #bbb);
+    }
+    .pro-feature svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--figma-color-text-tertiary, #777); }
+    .btn-upgrade {
+      width: 100%; padding: 9px 16px;
+      border: 1px solid var(--figma-color-text, #e0e0e0);
+      border-radius: 6px;
+      font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+      background: var(--figma-color-text, #e0e0e0);
+      color: var(--figma-color-bg, #1a1a1a);
+      letter-spacing: 0.3px;
+    }
+    .btn-upgrade:hover { opacity: 0.85; }
+    .btn-upgrade:disabled { opacity: 0.5; cursor: not-allowed; }
+    .pro-price {
+      font-size: 10px;
+      color: var(--figma-color-text-tertiary, #666);
+      margin-top: 8px;
+    }
+    .pro-unlocked {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 600;
+      color: #1BC47D;
+      margin-bottom: 8px;
+    }
+    .pro-unlocked svg { width: 13px; height: 13px; }
+
+    /* Saved Libraries */
+    .saved-label {
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--figma-color-text-tertiary, #777);
+      margin: 10px 0 6px;
+    }
+    .saved-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .saved-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 8px 4px 10px;
+      background: var(--figma-color-bg-secondary, #383838);
+      border: 1px solid var(--figma-color-border, #4a4a4a);
+      border-radius: 20px; cursor: pointer;
+      font-size: 10px; font-weight: 500;
+      color: var(--figma-color-text, #e0e0e0);
+      transition: all 0.15s;
+      max-width: 100%;
+    }
+    .saved-pill:hover {
+      border-color: var(--figma-color-border-selected, #888);
+      background: var(--figma-color-bg-hover, rgba(255, 255, 255, 0.08));
+    }
+    .saved-pill.active {
+      border-color: var(--figma-color-border-selected, #ccc);
+      background: var(--figma-color-bg-selected, rgba(255, 255, 255, 0.1));
+      color: var(--figma-color-text, #fff);
+    }
+    .saved-pill-name {
+      white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; max-width: 180px;
+    }
+    .saved-pill-remove {
+      width: 14px; height: 14px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: none; cursor: pointer;
+      color: var(--figma-color-text-tertiary, #777);
+      font-size: 11px; line-height: 1;
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .saved-pill-remove:hover { background: rgba(242, 72, 34, 0.2); color: #F24822; }
+    .saved-empty {
+      font-size: 10px; color: var(--figma-color-text-tertiary, #666);
+      font-style: italic;
+    }
+
+    /* Peer Design */
+    .pd-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .pd-label {
+      font-size: 11px; font-weight: 500;
+      color: var(--figma-color-text, #e0e0e0);
+    }
+    .pd-desc {
+      font-size: 10px; line-height: 1.5;
+      color: var(--figma-color-text-tertiary, #777);
+      margin-bottom: 8px;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 36px; height: 20px;
+      background: var(--figma-color-bg-hover, #555);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-switch.active {
+      background: #3B82F6;
+    }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: white;
+      top: 2px; left: 2px;
+      transition: transform 0.2s;
+    }
+    .toggle-switch.active::after {
+      transform: translateX(16px);
+    }
+    .pd-agents-list {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .pd-agent-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 8px;
+      background: var(--figma-color-bg-secondary, #383838);
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--figma-color-text, #e0e0e0);
+    }
+    .pd-agent-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pulse 2s infinite;
+    }
+    .pd-agent-name {
+      font-weight: 600;
+    }
+    .pd-agent-status {
+      flex: 1;
+      text-align: right;
+      font-size: 10px;
+      color: var(--figma-color-text-tertiary, #777);
+    }
+
+    /* Image Upload */
+    .img-upload-zone {
+      border: 2px dashed var(--figma-color-border, #555);
+      border-radius: 8px;
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .img-upload-zone:hover,
+    .img-upload-zone.dragover {
+      border-color: var(--figma-color-border-selected, #999);
+      background: var(--figma-color-bg-hover, rgba(255,255,255,0.04));
+    }
+    .img-upload-zone.has-image {
+      border-style: solid;
+      border-color: #1BC47D;
+      padding: 8px;
+    }
+    .img-upload-icon {
+      width: 24px; height: 24px;
+      color: var(--figma-color-text-tertiary, #777);
+    }
+    .img-upload-text {
+      font-size: 11px;
+      color: var(--figma-color-text-secondary, #999);
+    }
+    .img-upload-hint {
+      font-size: 9px;
+      color: var(--figma-color-text-tertiary, #666);
+    }
+    .img-preview-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+    .img-preview-thumb {
+      width: 56px; height: 56px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--figma-color-bg-secondary, #383838);
+      flex-shrink: 0;
+    }
+    .img-preview-info {
+      flex: 1;
+      text-align: left;
+      min-width: 0;
+    }
+    .img-preview-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--figma-color-text, #e0e0e0);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .img-preview-size {
+      font-size: 10px;
+      color: var(--figma-color-text-tertiary, #777);
+      margin-top: 2px;
+    }
+    .img-preview-status {
+      font-size: 10px;
+      color: #1BC47D;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .img-preview-status svg { width: 10px; height: 10px; }
+    .img-remove-btn {
+      width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: 1px solid transparent;
+      border-radius: 5px; cursor: pointer;
+      color: var(--figma-color-text-tertiary, #777);
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .img-remove-btn:hover {
+      background: rgba(242, 72, 34, 0.15);
+      border-color: rgba(242, 72, 34, 0.3);
+      color: #F24822;
+    }
+
+    /* Activity section fills remaining space */
+    .section-activity {
+      flex: 1; display: flex; flex-direction: column;
+      min-height: 0;
+    }
+    .section-activity .section-body.open {
+      flex: 1; display: flex; flex-direction: column;
+      min-height: 0;
+    }
+
+    /* Log */
+    .log {
+      font-size: 10px;
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      color: var(--figma-color-text-tertiary, #777);
+      flex: 1; overflow-y: auto;
+      padding: 8px;
+      background: var(--figma-color-bg-secondary, #383838);
+      border-radius: 4px;
+      min-height: 40px;
+    }
+    .log-entry { margin-bottom: 2px; }
+
+    /* ─── Guide Overlay ─────────────────────────────────────────────────────── */
+    .guide-overlay {
+      position: fixed; inset: 0;
+      background: var(--figma-color-bg, #2c2c2c);
+      z-index: 100; overflow-y: auto;
+      padding: 16px;
+      display: none;
+    }
+    .guide-overlay.open { display: block; }
+    .guide-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .guide-header h3 {
+      font-size: 15px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .guide-close {
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--figma-color-bg-secondary, #383838);
+      border: 1px solid var(--figma-color-border, #444);
+      border-radius: 6px; cursor: pointer;
+      color: var(--figma-color-text, #e0e0e0);
+      font-size: 14px;
+    }
+    .guide-close:hover { background: var(--figma-color-bg-hover, #404040); }
+    .guide-section {
+      margin-bottom: 16px;
+    }
+    .guide-section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--figma-color-text, #e0e0e0);
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .guide-section-title svg { width: 14px; height: 14px; }
+    .guide-card {
+      background: var(--figma-color-bg-secondary, #383838);
+      border: 1px solid var(--figma-color-border, #444);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    .guide-step {
+      display: flex; gap: 10px; margin-bottom: 10px;
+    }
+    .guide-step:last-child { margin-bottom: 0; }
+    .guide-step-num {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--figma-color-text, #e0e0e0); color: var(--figma-color-bg, #1a1a1a);
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .guide-step-content {
+      font-size: 11px; line-height: 1.5;
+      color: var(--figma-color-text, #e0e0e0);
+    }
+    .guide-step-content strong { color: var(--figma-color-text, #fff); }
+    .guide-step-content code {
+      background: var(--figma-color-bg-secondary, rgba(255, 255, 255, 0.1));
+      padding: 1px 5px; border-radius: 3px;
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      font-size: 10px; color: var(--figma-color-text-secondary, #ccc);
+    }
+    .guide-note {
+      font-size: 10px; line-height: 1.5;
+      color: var(--figma-color-text-secondary, #999);
+      padding: 8px 10px;
+      background: var(--figma-color-bg-hover, rgba(255, 255, 255, 0.03));
+      border-left: 2px solid var(--figma-color-border, #666);
+      border-radius: 0 4px 4px 0;
+      margin-top: 8px;
+    }
+    .guide-scopes {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      margin-top: 6px;
+    }
+    .guide-scope {
+      padding: 2px 7px; border-radius: 3px;
+      font-size: 9px; font-weight: 600;
+      background: var(--figma-color-bg-hover, rgba(255, 255, 255, 0.08));
+      color: var(--figma-color-text-secondary, #ccc);
+      border: 1px solid var(--figma-color-border, rgba(255, 255, 255, 0.15));
+    }
+    .guide-scope.optional {
+      background: var(--figma-color-bg-secondary, rgba(255, 255, 255, 0.04));
+      color: var(--figma-color-text-tertiary, #888);
+      border-color: var(--figma-color-border, rgba(255, 255, 255, 0.1));
+    }
+    .guide-divider {
+      height: 1px;
+      background: var(--figma-color-border, #444);
+      margin: 16px 0;
+    }
+    .guide-footer {
+      text-align: center;
+      font-size: 10px;
+      color: var(--figma-color-text-tertiary, #666);
+      padding: 8px 0;
+    }
+    .guide-footer a {
+      color: var(--figma-color-text-secondary, #ccc); text-decoration: none;
+    }
+
+    /* ─── Animation Preview Modal ────────────────────────────────────────────── */
+    .anim-modal {
+      position: fixed; inset: 0;
+      background: var(--figma-color-bg, #2c2c2c);
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+    }
+    .anim-modal.open { display: flex; }
+    .anim-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--figma-color-border, #444);
+      flex-shrink: 0;
+    }
+    .anim-modal-title {
+      font-size: 11px; font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+      color: var(--figma-color-text, #e0e0e0);
+    }
+    .anim-modal-title svg { width: 12px; height: 12px; }
+    .anim-modal-count {
+      font-size: 10px; font-weight: 400;
+      color: var(--figma-color-text-tertiary, #777);
+      margin-left: 2px;
+    }
+    .anim-modal-actions {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .btn-download {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border: none; border-radius: 4px;
+      font-size: 10px; font-weight: 600; cursor: pointer;
+      background: var(--figma-color-text, #e0e0e0);
+      color: var(--figma-color-bg, #1a1a1a);
+      transition: opacity 0.15s;
+    }
+    .btn-download:hover { opacity: 0.85; }
+    .btn-download svg { width: 11px; height: 11px; }
+    .anim-modal-grid {
+      flex: 1; overflow-y: auto;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+      gap: 10px;
+      align-content: start;
+    }
+    .anim-card {
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding: 12px 8px 8px;
+      border: 1px solid var(--figma-color-border, #444);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .anim-card:hover {
+      border-color: var(--figma-color-border-selected, #888);
+      filter: brightness(1.1);
+    }
+    .anim-card-icon {
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 6px;
+    }
+    .anim-card-icon svg {
+      width: 100%; height: 100%;
+      overflow: visible;
+    }
+    .anim-card-name {
+      font-size: 9px;
+      color: var(--figma-color-text-secondary, #999);
+      text-align: center;
+      white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .anim-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--figma-color-text-tertiary, #666);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div id="dot" class="status-dot connecting"></div>
+    <div id="statusText" class="status-text">Connecting...</div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="openGuide()" title="Documentation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection('settings')">
+      <span class="section-label">
+        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </span>
+      <svg id="settingsChevron" class="chevron" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M9 6l6 6-6 6"/></svg>
+    </div>
+    <div id="settingsBody" class="section-body">
+      <label for="tokenInput">Figma Access Token</label>
+      <input type="password" id="tokenInput" placeholder="figd_xxxxxxxxxxxx..." onchange="saveSettings()" />
+      <div style="font-size:10px; color:var(--figma-color-text-secondary); margin-top:2px;">
+        Required for design system features. See the <a href="#" onclick="openGuide(); return false;" style="color:var(--figma-color-text-secondary); text-decoration:underline;">guide</a> for setup.
+      </div>
+
+      <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--figma-color-border, #444);">
+        <label for="quiverKeyInput">Quiver AI API Key</label>
+        <input type="password" id="quiverKeyInput" placeholder="sk_live_xxxxxxxxxxxx..." onchange="saveSettings()" />
+        <div style="font-size:10px; color:var(--figma-color-text-secondary); margin-top:2px;">
+          For AI-powered SVG generation &amp; image vectorization. Get a key at <a href="https://app.quiver.ai/settings/api-keys" target="_blank" style="color:var(--figma-color-text-secondary); text-decoration:underline;">app.quiver.ai</a>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Peer Design -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection('peerDesign')">
+      <span class="section-label">
+        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Peer Design
+      </span>
+      <svg id="peerDesignChevron" class="chevron" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M9 6l6 6-6 6"/></svg>
+    </div>
+    <div id="peerDesignBody" class="section-body">
+      <div class="pd-row">
+        <span class="pd-label">Enable Peer Design</span>
+        <div id="pdToggle" class="toggle-switch" onclick="togglePeerDesign()"></div>
+      </div>
+      <div class="pd-desc">
+        AI designers with named cursors appear on your canvas and design collaboratively — like real Figma collaborators.
+      </div>
+      <div id="pdAgents" style="display:none;">
+        <div class="saved-label">Active Designers</div>
+        <div id="activeAgentsList" class="pd-agents-list">
+          <span class="saved-empty">No active designers</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Upload (for Quiver vectorization) -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection('imageUpload')">
+      <span class="section-label">
+        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Image Upload
+      </span>
+      <svg id="imageUploadChevron" class="chevron" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M9 6l6 6-6 6"/></svg>
+    </div>
+    <div id="imageUploadBody" class="section-body">
+      <div id="imgUploadZone" class="img-upload-zone"
+           onclick="triggerImageUpload()"
+           ondragover="handleDragOver(event)"
+           ondragleave="handleDragLeave(event)"
+           ondrop="handleDrop(event)">
+        <svg class="img-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span class="img-upload-text">Drop an image or click to upload</span>
+        <span class="img-upload-hint">PNG, JPG, WebP · Used for AI vectorization</span>
+      </div>
+      <input type="file" id="imgFileInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none" onchange="handleFileSelect(event)" />
+      <div style="font-size:10px; color:var(--figma-color-text-tertiary); margin-top:6px;">
+        Upload an image here, then ask Cursor to vectorize it. The image stays local in the plugin.
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Log -->
+  <div class="section section-activity">
+    <div class="section-header" onclick="toggleSection('log')">
+      <span class="section-label">
+        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Activity
+      </span>
+      <svg id="logChevron" class="chevron open" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M9 6l6 6-6 6"/></svg>
+    </div>
+    <div id="logBody" class="section-body open">
+      <div id="log" class="log"></div>
+    </div>
+  </div>
+
+  <!-- ═══ Animation Preview Modal ═══════════════════════════════════════ -->
+  <div id="animModal" class="anim-modal">
+    <div class="anim-modal-header">
+      <div class="anim-modal-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Animated Icons
+        <span id="animCount" class="anim-modal-count"></span>
+      </div>
+      <div class="anim-modal-actions">
+        <button class="btn-download" onclick="downloadAnimPack()" title="Download all animated SVGs as ZIP">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Pack
+        </button>
+        <button class="guide-close" onclick="closeAnimModal()" style="width:24px;height:24px;font-size:12px;">✕</button>
+      </div>
+    </div>
+    <div id="animGrid" class="anim-modal-grid"></div>
+  </div>
+
+  <!-- ═══ Guide Overlay ═══════════════════════════════════════════════════ -->
+  <div id="guideOverlay" class="guide-overlay">
+    <div class="guide-header">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Getting Started
+      </h3>
+      <button class="guide-close" onclick="closeGuide()">✕</button>
+    </div>
+
+    <!-- Step 1: Setup MCP Server -->
+    <div class="guide-section">
+      <div class="guide-section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        1 · Connect to Cursor
+      </div>
+      <div class="guide-card">
+        <div class="guide-step">
+          <div class="guide-step-num">1</div>
+          <div class="guide-step-content">
+            In Cursor, go to <strong>Settings → MCP → Add new MCP server</strong>.
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-step-num">2</div>
+          <div class="guide-step-content">
+            Add this config (or paste into <code>.cursor/mcp.json</code>):
+          </div>
+        </div>
+        <div style="background:var(--figma-color-bg-secondary, rgba(255,255,255,0.05)); border:1px solid var(--figma-color-border, rgba(255,255,255,0.1)); border-radius:6px; padding:10px; margin:4px 0 8px 30px; font-family:'SF Mono','Monaco','Menlo',monospace; font-size:10px; line-height:1.6; color:var(--figma-color-text-secondary, #ccc); white-space:pre; overflow-x:auto;">{
+  "mcpServers": {
+    "figsor": {
+      "command": "npx",
+      "args": ["-y", "figsor"]
+    }
+  }
+}</div>
+        <div class="guide-step">
+          <div class="guide-step-num">3</div>
+          <div class="guide-step-content">
+            Open this plugin in Figma — the status dot turns <strong style="color:#1BC47D;">green</strong> when connected. That's it.
+          </div>
+        </div>
+        <div class="guide-note">
+          You don't need to run anything in the terminal. Cursor starts and manages the server automatically.
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Generate Access Token -->
+    <div class="guide-section">
+      <div class="guide-section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        2 · Figma Access Token
+      </div>
+      <div class="guide-card">
+        <div class="guide-step">
+          <div class="guide-step-num">1</div>
+          <div class="guide-step-content">
+            Go to <strong>Figma → Settings → Security</strong>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-step-num">2</div>
+          <div class="guide-step-content">
+            Click <strong>Generate new token</strong>. Name it <code>Figsor</code> and set expiry to <strong>90 days</strong>.
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-step-num">3</div>
+          <div class="guide-step-content">
+            Enable these scopes:
+            <div class="guide-scopes">
+              <span class="guide-scope">file_content:read</span>
+              <span class="guide-scope">file_metadata:read</span>
+              <span class="guide-scope">library_assets:read</span>
+              <span class="guide-scope">library_content:read</span>
+              <span class="guide-scope">team_library_content:read</span>
+            </div>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-step-num">4</div>
+          <div class="guide-step-content">
+            Copy the token and paste it into the <strong>Figma Access Token</strong> field in the <strong>Settings</strong> section.
+          </div>
+        </div>
+        <div class="guide-note">
+          Your token is stored locally in the plugin and never leaves your machine. It's only used to read your library components.
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- Step 4: Start Designing -->
+    <div class="guide-section">
+      <div class="guide-section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        4 · Start Designing
+      </div>
+      <div class="guide-card">
+        <div class="guide-step">
+          <div class="guide-step-num">✦</div>
+          <div class="guide-step-content">
+            In Cursor, just chat naturally:<br/>
+            <code>"Design a login screen"</code><br/>
+            <code>"Build a dashboard using the DS"</code><br/>
+            <code>"Edit the selected card's color"</code>
+          </div>
+        </div>
+        <div class="guide-note">
+          Figsor supports creating frames, shapes, text, SVG icons, auto-layout, effects, and importing design system components — all through chat.
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-divider"></div>
+    <div class="guide-footer">Figsor v1.0 · Figma + Cursor</div>
+  </div>
+
+  <script>
+    // ─── State ───────────────────────────────────────────────────────────────
+    const WS_URL = 'ws://localhost:3055';
+    let ws;
+    let commandCount = 0;
+    let peerDesignEnabled = false;
+    var activeAgents = {}; // { agentId: { name, color } }
+
+    // ─── UI Helpers ──────────────────────────────────────────────────────────
+    const $ = (id) => document.getElementById(id);
+    const dot = $('dot');
+    const statusText = $('statusText');
+    const logEl = $('log');
+    const tokenInput = $('tokenInput');
+
+    function addLog(msg) {
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+      while (logEl.children.length > 50) logEl.removeChild(logEl.firstChild);
+    }
+
+    function setStatus(state, text) {
+      dot.className = 'status-dot ' + state;
+      statusText.textContent = text;
+    }
+
+    function toggleSection(name) {
+      const body = $(name + 'Body');
+      const chevron = $(name + 'Chevron');
+      body.classList.toggle('open');
+      chevron.classList.toggle('open');
+    }
+
+    // ─── Guide ───────────────────────────────────────────────────────────────
+    function openGuide() {
+      $('guideOverlay').classList.add('open');
+    }
+    function closeGuide() {
+      $('guideOverlay').classList.remove('open');
+    }
+
+    // ─── Peer Design ──────────────────────────────────────────────────────────
+    function togglePeerDesign() {
+      peerDesignEnabled = !peerDesignEnabled;
+      var toggle = $('pdToggle');
+      var agentsSection = $('pdAgents');
+
+      if (peerDesignEnabled) {
+        toggle.classList.add('active');
+        agentsSection.style.display = 'block';
+      } else {
+        toggle.classList.remove('active');
+        agentsSection.style.display = 'none';
+        // Clean up ALL agent cursors (including orphans from previous sessions)
+        parent.postMessage({ pluginMessage: { type: 'cleanup_agent_cursors' } }, '*');
+        activeAgents = {};
+        renderActiveAgents();
+      }
+
+      // Send to MCP server
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'settings_update', peerDesign: peerDesignEnabled }));
+      }
+
+      saveSettings();
+      addLog('Peer Design: ' + (peerDesignEnabled ? 'ON' : 'OFF'));
+    }
+
+    function renderActiveAgents() {
+      var list = $('activeAgentsList');
+      var ids = Object.keys(activeAgents);
+
+      if (ids.length === 0) {
+        list.innerHTML = '<span class="saved-empty">No active designers</span>';
+        return;
+      }
+
+      list.innerHTML = '';
+      ids.forEach(function(id) {
+        var agent = activeAgents[id];
+        var item = document.createElement('div');
+        item.className = 'pd-agent-item';
+        item.innerHTML = '<span class="pd-agent-dot" style="background:' + agent.color + '"></span>' +
+          '<span class="pd-agent-name">' + agent.name + '</span>' +
+          '<span class="pd-agent-status">designing...</span>';
+        list.appendChild(item);
+      });
+    }
+
+    // ─── Animation Preview ─────────────────────────────────────────────────────
+    let animatedIcons = [];
+
+    // ── Smart background: detect icon color and pick contrasting bg ──
+    function detectIconBg(svgStr) {
+      var colors = [];
+      // Extract stroke="..." and fill="..." values (skip "none" and style blocks)
+      var stripped = svgStr.replace(/<style[\s\S]*?<\/style>/gi, '');
+      var re = /(?:stroke|fill)\s*=\s*"([^"]+)"/gi;
+      var m;
+      while ((m = re.exec(stripped)) !== null) {
+        var v = m[1].trim().toLowerCase();
+        if (v === 'none' || v === 'currentcolor') continue;
+        colors.push(v);
+      }
+      if (colors.length === 0) return { bg: '#ffffff', label: '#666666' }; // default white
+
+      // Parse hex to RGB
+      function hexToRgb(hex) {
+        hex = hex.replace('#', '');
+        if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+        if (hex.length === 8) hex = hex.substring(0, 6); // strip alpha
+        var n = parseInt(hex, 16);
+        return isNaN(n) ? null : { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+      }
+
+      // Named color fallback
+      function namedToRgb(name) {
+        var map = { black:[0,0,0], white:[255,255,255], red:[255,0,0], green:[0,128,0],
+          blue:[0,0,255], gray:[128,128,128], grey:[128,128,128], orange:[255,165,0],
+          yellow:[255,255,0], purple:[128,0,128], pink:[255,192,203], cyan:[0,255,255] };
+        var c = map[name];
+        return c ? { r: c[0], g: c[1], b: c[2] } : null;
+      }
+
+      // Relative luminance (0=black, 1=white)
+      function luminance(rgb) {
+        return (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+      }
+
+      var totalLum = 0, chromaTotal = 0, count = 0;
+      for (var i = 0; i < colors.length; i++) {
+        var rgb = colors[i].startsWith('#') ? hexToRgb(colors[i]) : namedToRgb(colors[i]);
+        if (!rgb) continue;
+        totalLum += luminance(rgb);
+        // chroma: how colorful (0 = grayscale)
+        var maxC = Math.max(rgb.r, rgb.g, rgb.b), minC = Math.min(rgb.r, rgb.g, rgb.b);
+        chromaTotal += (maxC - minC) / 255;
+        count++;
+      }
+      if (count === 0) return { bg: '#ffffff', label: '#666666' };
+
+      var avgLum = totalLum / count;
+      var avgChroma = chromaTotal / count;
+
+      // Colored icons (chroma > 0.15) → neutral mid-tone bg
+      if (avgChroma > 0.15) {
+        return avgLum > 0.5
+          ? { bg: '#1e1e1e', label: '#aaaaaa' }  // bright colors → dark bg
+          : { bg: '#f5f5f5', label: '#777777' };  // dark colors → light bg
+      }
+      // Dark icons → white bg
+      if (avgLum < 0.4) return { bg: '#ffffff', label: '#999999' };
+      // Light icons → dark bg
+      if (avgLum > 0.6) return { bg: '#1a1a1a', label: '#888888' };
+      // Mid-tone → slight off-white
+      return { bg: '#f0f0f0', label: '#777777' };
+    }
+
+    function showAnimModal(icons) {
+      animatedIcons = icons || [];
+      var grid = $('animGrid');
+      var count = $('animCount');
+
+      grid.innerHTML = '';
+      count.textContent = animatedIcons.length + ' icon' + (animatedIcons.length !== 1 ? 's' : '');
+
+      if (animatedIcons.length === 0) {
+        grid.innerHTML = '<div class="anim-empty">No animated icons to display</div>';
+        $('animModal').classList.add('open');
+        return;
+      }
+
+      animatedIcons.forEach(function(icon) {
+        var theme = detectIconBg(icon.svg);
+
+        var card = document.createElement('div');
+        card.className = 'anim-card';
+        card.style.background = theme.bg;
+        card.title = icon.name + ' — click to download';
+        card.onclick = function() { downloadSingleSvg(icon); };
+
+        var iconEl = document.createElement('div');
+        iconEl.className = 'anim-card-icon';
+        iconEl.innerHTML = icon.svg;
+
+        var nameEl = document.createElement('div');
+        nameEl.className = 'anim-card-name';
+        nameEl.style.color = theme.label;
+        nameEl.textContent = icon.name;
+
+        card.appendChild(iconEl);
+        card.appendChild(nameEl);
+        grid.appendChild(card);
+      });
+
+      $('animModal').classList.add('open');
+      addLog('Animation preview: ' + animatedIcons.length + ' icons');
+    }
+
+    function closeAnimModal() {
+      $('animModal').classList.remove('open');
+    }
+
+    function downloadSingleSvg(icon) {
+      const blob = new Blob([icon.svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = sanitizeFilename(icon.name) + '.svg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addLog('Downloaded: ' + icon.name + '.svg');
+    }
+
+    function sanitizeFilename(name) {
+      return (name || 'icon').replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '-').toLowerCase();
+    }
+
+    // ── CRC32 (needed for ZIP) ──
+    function _crc32(bytes) {
+      let crc = 0xFFFFFFFF;
+      for (let i = 0; i < bytes.length; i++) {
+        crc ^= bytes[i];
+        for (let j = 0; j < 8; j++) {
+          crc = (crc >>> 1) ^ (crc & 1 ? 0xEDB88320 : 0);
+        }
+      }
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    // ── Minimal ZIP creator (uncompressed, pure JS) ──
+    function createZip(files) {
+      const enc = new TextEncoder();
+      const parts = [];
+      const cdParts = [];
+      let offset = 0;
+
+      for (const file of files) {
+        const nameBytes = enc.encode(file.name);
+        const contentBytes = enc.encode(file.content);
+        const crc = _crc32(contentBytes);
+
+        // Local file header (30 bytes + name)
+        const lh = new ArrayBuffer(30);
+        const lv = new DataView(lh);
+        lv.setUint32(0, 0x04034b50, true);  // signature
+        lv.setUint16(4, 20, true);           // version needed
+        lv.setUint16(6, 0, true);            // flags
+        lv.setUint16(8, 0, true);            // compression: stored
+        lv.setUint16(10, 0, true);           // mod time
+        lv.setUint16(12, 0, true);           // mod date
+        lv.setUint32(14, crc, true);         // CRC-32
+        lv.setUint32(18, contentBytes.length, true); // compressed size
+        lv.setUint32(22, contentBytes.length, true); // uncompressed size
+        lv.setUint16(26, nameBytes.length, true);    // name length
+        lv.setUint16(28, 0, true);           // extra field length
+
+        parts.push(new Uint8Array(lh), nameBytes, contentBytes);
+
+        // Central directory entry (46 bytes + name)
+        const cd = new ArrayBuffer(46);
+        const cv = new DataView(cd);
+        cv.setUint32(0, 0x02014b50, true);  // signature
+        cv.setUint16(4, 20, true);           // version made by
+        cv.setUint16(6, 20, true);           // version needed
+        cv.setUint16(8, 0, true);            // flags
+        cv.setUint16(10, 0, true);           // compression
+        cv.setUint16(12, 0, true);           // mod time
+        cv.setUint16(14, 0, true);           // mod date
+        cv.setUint32(16, crc, true);         // CRC-32
+        cv.setUint32(20, contentBytes.length, true); // compressed size
+        cv.setUint32(24, contentBytes.length, true); // uncompressed size
+        cv.setUint16(28, nameBytes.length, true);    // name length
+        cv.setUint16(30, 0, true);           // extra length
+        cv.setUint16(32, 0, true);           // comment length
+        cv.setUint16(34, 0, true);           // disk start
+        cv.setUint16(36, 0, true);           // internal attr
+        cv.setUint32(38, 0, true);           // external attr
+        cv.setUint32(42, offset, true);      // local header offset
+
+        cdParts.push(new Uint8Array(cd), nameBytes);
+        offset += 30 + nameBytes.length + contentBytes.length;
+      }
+
+      // Central directory size
+      const cdStart = offset;
+      let cdSize = 0;
+      cdParts.forEach(b => cdSize += b.length);
+
+      // End of central directory (22 bytes)
+      const eocd = new ArrayBuffer(22);
+      const ev = new DataView(eocd);
+      ev.setUint32(0, 0x06054b50, true);     // signature
+      ev.setUint16(4, 0, true);              // disk number
+      ev.setUint16(6, 0, true);              // cd start disk
+      ev.setUint16(8, files.length, true);   // entries on disk
+      ev.setUint16(10, files.length, true);  // total entries
+      ev.setUint32(12, cdSize, true);        // cd size
+      ev.setUint32(16, cdStart, true);       // cd offset
+
+      return new Blob(
+        [...parts, ...cdParts, new Uint8Array(eocd)],
+        { type: 'application/zip' }
+      );
+    }
+
+    function downloadAnimPack() {
+      if (animatedIcons.length === 0) return;
+
+      const files = animatedIcons.map(icon => ({
+        name: sanitizeFilename(icon.name) + '.svg',
+        content: icon.svg,
+      }));
+
+      const zip = createZip(files);
+      const url = URL.createObjectURL(zip);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'animated-icons.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addLog('Downloaded pack: ' + files.length + ' animated SVGs');
+    }
+
+    // ─── Image Upload ─────────────────────────────────────────────────────────
+    var uploadedImageBase64 = null;
+    var uploadedImageName = null;
+    var uploadedImageSize = 0;
+
+    function triggerImageUpload() {
+      $('imgFileInput').click();
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      $('imgUploadZone').classList.add('dragover');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      $('imgUploadZone').classList.remove('dragover');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      $('imgUploadZone').classList.remove('dragover');
+      var files = e.dataTransfer.files;
+      if (files.length > 0) processImageFile(files[0]);
+    }
+
+    function handleFileSelect(e) {
+      var files = e.target.files;
+      if (files.length > 0) processImageFile(files[0]);
+      e.target.value = ''; // reset so same file can be re-selected
+    }
+
+    function processImageFile(file) {
+      if (!file.type.startsWith('image/')) {
+        addLog('Not an image file: ' + file.type);
+        return;
+      }
+      // Max 10MB
+      if (file.size > 10 * 1024 * 1024) {
+        addLog('Image too large (max 10MB): ' + (file.size / 1024 / 1024).toFixed(1) + 'MB');
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var dataUrl = e.target.result;
+        // Extract base64 part (remove "data:image/png;base64," prefix)
+        var base64 = dataUrl.split(',')[1];
+        uploadedImageBase64 = base64;
+        uploadedImageName = file.name;
+        uploadedImageSize = file.size;
+        renderImagePreview(dataUrl);
+        addLog('Image uploaded: ' + file.name + ' (' + formatBytes(file.size) + ')');
+
+        // Notify MCP server that an image is available
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'image_uploaded',
+            name: file.name,
+            size: file.size,
+            mimeType: file.type,
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderImagePreview(dataUrl) {
+      var zone = $('imgUploadZone');
+      zone.classList.add('has-image');
+      zone.onclick = null; // disable click-to-upload on preview
+      zone.innerHTML =
+        '<div class="img-preview-wrap">' +
+          '<img class="img-preview-thumb" src="' + dataUrl + '" alt="preview" />' +
+          '<div class="img-preview-info">' +
+            '<div class="img-preview-name">' + escapeHtml(uploadedImageName) + '</div>' +
+            '<div class="img-preview-size">' + formatBytes(uploadedImageSize) + '</div>' +
+            '<div class="img-preview-status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Ready for vectorization</div>' +
+          '</div>' +
+          '<button class="img-remove-btn" onclick="event.stopPropagation(); removeUploadedImage();" title="Remove image">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+          '</button>' +
+        '</div>';
+    }
+
+    function removeUploadedImage() {
+      uploadedImageBase64 = null;
+      uploadedImageName = null;
+      uploadedImageSize = 0;
+      var zone = $('imgUploadZone');
+      zone.classList.remove('has-image');
+      zone.onclick = triggerImageUpload;
+      zone.innerHTML =
+        '<svg class="img-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
+        '<span class="img-upload-text">Drop an image or click to upload</span>' +
+        '<span class="img-upload-hint">PNG, JPG, WebP · Used for AI vectorization</span>';
+      addLog('Image removed');
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'image_removed' }));
+      }
+    }
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ─── Quiver AI ────────────────────────────────────────────────────────────
+    const QUIVER_API = 'https://api.quiver.ai/v1';
+    const quiverKeyInput = $('quiverKeyInput');
+
+    async function handleQuiverCommand(msgId, command, params) {
+      const apiKey = quiverKeyInput ? quiverKeyInput.value.trim() : '';
+      if (!apiKey) {
+        sendQuiverResponse(msgId, null, 'Quiver API key not configured. Open the Figsor plugin in Figma → Settings → enter your Quiver AI API Key. Get one at https://app.quiver.ai/settings/api-keys');
+        return;
+      }
+
+      try {
+        var endpoint, body;
+
+        if (command === 'quiver_generate_svg') {
+          endpoint = '/svgs/generations';
+          body = {
+            model: params.model || 'arrow-preview',
+            prompt: params.prompt,
+            stream: false,
+          };
+          if (params.instructions) body.instructions = params.instructions;
+
+          // Build references array, optionally including the plugin-uploaded image
+          var refs = params.references ? params.references.slice() : [];
+          if (params.use_plugin_image_as_reference) {
+            if (!uploadedImageBase64) {
+              sendQuiverResponse(msgId, null, 'No image uploaded in the Figsor plugin. Please upload an image in the plugin\'s Image Upload section first to use it as a reference.');
+              return;
+            }
+            refs.push({ base64: uploadedImageBase64 });
+            addLog('Using uploaded image as reference: ' + (uploadedImageName || 'unknown'));
+          }
+          if (refs.length > 0) body.references = refs;
+
+          if (params.n) body.n = params.n;
+          if (params.temperature !== undefined) body.temperature = params.temperature;
+          addLog('Quiver: generating SVG...');
+
+        } else if (command === 'quiver_vectorize_svg') {
+          endpoint = '/svgs/vectorizations';
+
+          // Support use_plugin_image — use the image uploaded in the plugin UI
+          if (params.use_plugin_image) {
+            if (!uploadedImageBase64) {
+              sendQuiverResponse(msgId, null, 'No image uploaded in the Figsor plugin. Please upload an image in the plugin\'s Image Upload section first.');
+              return;
+            }
+            params.image_base64 = uploadedImageBase64;
+            addLog('Using uploaded image: ' + (uploadedImageName || 'unknown'));
+          }
+
+          if (!params.image_url && !params.image_base64) {
+            sendQuiverResponse(msgId, null, 'Provide either image_url, image_base64, or set use_plugin_image to true (requires uploading an image in the Figsor plugin first).');
+            return;
+          }
+          var image = {};
+          if (params.image_url) image.url = params.image_url;
+          else if (params.image_base64) image.base64 = params.image_base64;
+
+          body = {
+            model: params.model || 'arrow-preview',
+            image: image,
+            stream: false,
+          };
+          if (params.auto_crop !== undefined) body.auto_crop = params.auto_crop;
+          if (params.n) body.n = params.n;
+          if (params.temperature !== undefined) body.temperature = params.temperature;
+          addLog('Quiver: vectorizing image...');
+
+        } else {
+          sendQuiverResponse(msgId, null, 'Unknown Quiver command: ' + command);
+          return;
+        }
+
+        const res = await fetch(QUIVER_API + endpoint, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + apiKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          var errBody = {};
+          try { errBody = await res.json(); } catch (e) {}
+          var errCode = errBody.code || res.status;
+          var errMsg = errBody.message || res.statusText;
+          sendQuiverResponse(msgId, null, 'Quiver API error [' + errCode + ']: ' + errMsg);
+          addLog('Quiver error: ' + errMsg);
+          return;
+        }
+
+        const result = await res.json();
+        const svgs = (result.data || []).map(function(d, i) {
+          return { index: i, svg: d.svg };
+        });
+
+        sendQuiverResponse(msgId, {
+          count: svgs.length,
+          svgs: svgs,
+          usage: result.usage,
+          tip: 'Use create_svg_node with the svg field to place this in Figma.',
+        });
+        addLog('Quiver: got ' + svgs.length + ' SVG(s)');
+
+      } catch (e) {
+        sendQuiverResponse(msgId, null, e.message || String(e));
+        addLog('Quiver error: ' + (e.message || e));
+      }
+    }
+
+    function sendQuiverResponse(msgId, result, error) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      if (error) {
+        ws.send(JSON.stringify({ id: msgId, type: 'error', error: error }));
+      } else {
+        ws.send(JSON.stringify({ id: msgId, type: 'response', result: result }));
+      }
+    }
+
+    // ─── Storage (via plugin sandbox) ────────────────────────────────────────
+    function saveSettings() {
+      parent.postMessage({
+        pluginMessage: {
+          type: 'save_settings',
+          settings: {
+            token: tokenInput ? tokenInput.value : '',
+            quiverKey: quiverKeyInput ? quiverKeyInput.value : '',
+            peerDesign: peerDesignEnabled,
+          }
+        }
+      }, '*');
+    }
+
+    function requestSettings() {
+      parent.postMessage({
+        pluginMessage: { type: 'load_settings' }
+      }, '*');
+    }
+
+    // ─── Handshake Key (must match MCP server) ────────────────────────────────
+    const _a='fgsr',_b='7x9K',_c='mQ3p',_d='Wv2R',_e='nL8j',_f='Ht5Y',_g='cD4s',_h='bA6e';
+    const HK = [_a,_b,_c,_d,_e,_f,_g,_h].join('');
+
+    // ─── Pure-JS SHA-256 + HMAC (Figma webview has no Web Crypto API) ────────
+    const _K256 = [
+      0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+      0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+      0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+      0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+      0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+      0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+      0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+      0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+    ];
+    function _ror(v, n) { return (v >>> n) | (v << (32 - n)); }
+    function _sha256(bytes) {
+      var b = bytes.slice();
+      var len = b.length;
+      b.push(0x80);
+      while (b.length % 64 !== 56) b.push(0);
+      var bl = len * 8;
+      b.push(0, 0, 0, 0, (bl >>> 24) & 0xff, (bl >>> 16) & 0xff, (bl >>> 8) & 0xff, bl & 0xff);
+      var h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a;
+      var h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+      for (var off = 0; off < b.length; off += 64) {
+        var w = new Array(64);
+        for (var i = 0; i < 16; i++) w[i] = (b[off+i*4]<<24)|(b[off+i*4+1]<<16)|(b[off+i*4+2]<<8)|b[off+i*4+3];
+        for (var i = 16; i < 64; i++) {
+          var s0 = _ror(w[i-15],7) ^ _ror(w[i-15],18) ^ (w[i-15]>>>3);
+          var s1 = _ror(w[i-2],17) ^ _ror(w[i-2],19) ^ (w[i-2]>>>10);
+          w[i] = (w[i-16]+s0+w[i-7]+s1)|0;
+        }
+        var a=h0,b2=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+        for (var i = 0; i < 64; i++) {
+          var S1=_ror(e,6)^_ror(e,11)^_ror(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+_K256[i]+w[i])|0;
+          var S0=_ror(a,2)^_ror(a,13)^_ror(a,22), maj=(a&b2)^(a&c)^(b2&c), t2=(S0+maj)|0;
+          h=g; g=f; f=e; e=(d+t1)|0; d=c; c=b2; b2=a; a=(t1+t2)|0;
+        }
+        h0=(h0+a)|0;h1=(h1+b2)|0;h2=(h2+c)|0;h3=(h3+d)|0;
+        h4=(h4+e)|0;h5=(h5+f)|0;h6=(h6+g)|0;h7=(h7+h)|0;
+      }
+      return [h0,h1,h2,h3,h4,h5,h6,h7];
+    }
+    function _toBytes(str) {
+      var a = [];
+      for (var i = 0; i < str.length; i++) {
+        var c = str.charCodeAt(i);
+        if (c < 0x80) a.push(c);
+        else if (c < 0x800) { a.push(0xc0|(c>>6), 0x80|(c&0x3f)); }
+        else { a.push(0xe0|(c>>12), 0x80|((c>>6)&0x3f), 0x80|(c&0x3f)); }
+      }
+      return a;
+    }
+    function _hashToBytes(h) {
+      var r = [];
+      for (var i = 0; i < h.length; i++) r.push((h[i]>>>24)&0xff,(h[i]>>>16)&0xff,(h[i]>>>8)&0xff,h[i]&0xff);
+      return r;
+    }
+    function _hashToHex(h) {
+      var s = '';
+      for (var i = 0; i < h.length; i++) s += ('00000000'+(h[i]>>>0).toString(16)).slice(-8);
+      return s;
+    }
+    function hmacSHA256(key, message) {
+      var kb = _toBytes(key), mb = _toBytes(message);
+      if (kb.length > 64) kb = _hashToBytes(_sha256(kb));
+      while (kb.length < 64) kb.push(0);
+      var ip = new Array(64), op = new Array(64);
+      for (var i = 0; i < 64; i++) { ip[i] = kb[i] ^ 0x36; op[i] = kb[i] ^ 0x5c; }
+      var inner = _hashToBytes(_sha256(ip.concat(mb)));
+      return _hashToHex(_sha256(op.concat(inner)));
+    }
+
+    // ─── WebSocket ───────────────────────────────────────────────────────────
+    function connect() {
+      setStatus('connecting', 'Connecting...');
+      addLog('Attempting WebSocket connection...');
+      let authenticated = false;
+
+      try {
+        ws = new WebSocket(WS_URL);
+      } catch (e) {
+        setStatus('disconnected', 'Failed to create WebSocket');
+        addLog('WebSocket creation failed: ' + e.message);
+        setTimeout(connect, 3000);
+        return;
+      }
+
+      ws.onopen = () => {
+        setStatus('connecting', 'Authenticating...');
+        addLog('Connected — awaiting handshake...');
+        commandCount = 0;
+      };
+
+      ws.onmessage = async (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          // ── Handshake flow ──
+          if (data.type === 'handshake_challenge' && data.nonce) {
+            addLog('Handshake challenge received');
+            const hash = hmacSHA256(HK, data.nonce);
+            ws.send(JSON.stringify({ type: 'handshake_response', hash: hash }));
+            return;
+          }
+
+          if (data.type === 'handshake_ok') {
+            authenticated = true;
+            setStatus('connected', 'Connected');
+            addLog('Authenticated ✓');
+            // Sync peer design setting
+            if (peerDesignEnabled) {
+              ws.send(JSON.stringify({ type: 'settings_update', peerDesign: true }));
+            }
+            return;
+          }
+
+          // ── Normal command messages (only after auth) ──
+          if (!authenticated) return;
+
+          if (data.command) {
+            commandCount++;
+            addLog('← cmd #' + commandCount + ': ' + data.command);
+
+            // Intercept animation preview — UI-only, no sandbox needed
+            if (data.command === 'show_animation_preview') {
+              showAnimModal(data.params && data.params.icons ? data.params.icons : []);
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                  id: data.id,
+                  type: 'response',
+                  result: { shown: true, count: (data.params && data.params.icons ? data.params.icons.length : 0) }
+                }));
+              }
+              return;
+            }
+
+            // Intercept get_quiver_context — return API key + uploaded image to MCP server
+            if (data.command === 'get_quiver_context') {
+              const apiKey = quiverKeyInput ? quiverKeyInput.value.trim() : '';
+              ws.send(JSON.stringify({
+                id: data.id,
+                type: 'response',
+                result: {
+                  apiKey: apiKey || null,
+                  imageBase64: uploadedImageBase64 || null,
+                  imageName: uploadedImageName || null,
+                }
+              }));
+              return;
+            }
+
+            // Intercept Quiver AI commands — UI makes the API calls (fallback)
+            if (data.command === 'quiver_generate_svg' || data.command === 'quiver_vectorize_svg') {
+              handleQuiverCommand(data.id, data.command, data.params || {});
+              return;
+            }
+
+            // Forward to plugin sandbox code
+            parent.postMessage({ pluginMessage: data }, '*');
+          }
+        } catch (e) {
+          addLog('Error parsing message: ' + e.message);
+        }
+      };
+
+      ws.onclose = () => {
+        authenticated = false;
+        setStatus('disconnected', 'Disconnected — reconnecting in 3s...');
+        addLog('Connection closed');
+        setTimeout(connect, 3000);
+      };
+
+      ws.onerror = (e) => {
+        addLog('WebSocket error: ' + (e.message || 'connection refused'));
+      };
+    }
+
+    // ─── Messages from plugin sandbox ────────────────────────────────────────
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+
+      // Settings loaded from storage
+      if (msg.type === 'settings_loaded') {
+        if (msg.settings) {
+          if (msg.settings.token && tokenInput) tokenInput.value = msg.settings.token;
+          if (msg.settings.quiverKey && quiverKeyInput) quiverKeyInput.value = msg.settings.quiverKey;
+          if (msg.settings.peerDesign) {
+            peerDesignEnabled = true;
+            $('pdToggle').classList.add('active');
+            $('pdAgents').style.display = 'block';
+          }
+        }
+        return;
+      }
+
+      // Agent cursor events (peer design)
+      if (msg.type === 'agent_spawned') {
+        activeAgents[msg.agentId] = { name: msg.name, color: msg.color };
+        renderActiveAgents();
+        if (!$('pdAgents').style.display || $('pdAgents').style.display === 'none') {
+          $('pdAgents').style.display = 'block';
+        }
+        addLog('Agent joined: ' + msg.name);
+        return;
+      }
+      if (msg.type === 'agent_dismissed') {
+        delete activeAgents[msg.agentId];
+        renderActiveAgents();
+        addLog('Agent left: ' + msg.agentId);
+        return;
+      }
+      if (msg.type === 'agents_all_dismissed') {
+        activeAgents = {};
+        renderActiveAgents();
+        addLog('All agents dismissed');
+        return;
+      }
+
+      // Command response — forward to MCP server
+      if (msg.id) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(msg));
+          const status = msg.type === 'error' ? 'error' : 'ok';
+          addLog('→ response ' + status);
+        } else {
+          addLog('Cannot send response — not connected');
+        }
+      }
+    };
+
+    // ─── Init ────────────────────────────────────────────────────────────────
+    connect();
+    requestSettings();
+  </script>
+</body>
+</html>

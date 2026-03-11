@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.log
+.playwright-mcp/
+figma-canvas.png
+figsor-pro/
+.DS_Store
